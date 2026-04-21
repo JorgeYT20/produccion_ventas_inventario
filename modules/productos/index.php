@@ -10,7 +10,10 @@ if (!tienePermiso('productos_ver_lista') && !usuarioTieneRol([1, 2])) {
     exit;
 }
 
-$puedeGestionarInventario = usuarioTieneRol([1, 2]) || tienePermiso('productos_crear') || tienePermiso('productos_editar') || tienePermiso('productos_cambiar_estado');
+$puedeEditar = usuarioTieneRol([1]) || tienePermiso('productos_editar');
+$puedeCrear = usuarioTieneRol([1]) || tienePermiso('productos_crear');
+$puedeCambiarEstado = usuarioTieneRol([1, 2]) || tienePermiso('productos_cambiar_estado');
+$puedeGestionarInventario = $puedeCrear || $puedeEditar || $puedeCambiarEstado;
 
 $ver_inactivos = isset($_GET['ver']) && $_GET['ver'] == 'inactivos';
 $filtro_activo = $ver_inactivos ? 0 : 1;
@@ -78,7 +81,7 @@ $categorias_resultado = $conexion->query($categorias_sql);
             <?php else: ?>
                 <a href="index.php?ver=inactivos" class="btn btn-secondary">Ver Inactivos</a>
             <?php endif; ?>
-            <?php if ($puedeGestionarInventario): ?>
+            <?php if ($puedeCrear): ?>
                 <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#productoModal">
                     <i class="fas fa-plus"></i> Agregar Producto
                 </button>
@@ -125,7 +128,10 @@ $categorias_resultado = $conexion->query($categorias_sql);
                         <th>Precio Venta</th>
                         <th>Stock</th>
                         <th>Estado</th>
-                        <th>Acciones</th>
+                        <th>Herramientas</th>
+                        <?php if ($puedeGestionarInventario): ?>
+                            <th>Acciones</th>
+                        <?php endif; ?>
                     </tr>
                 </thead>
                 <tbody>
@@ -161,34 +167,6 @@ $categorias_resultado = $conexion->query($categorias_sql);
                                         <i class="fas fa-eye"></i>
                                     </a>
                                 <?php endif; ?>
-                                <?php if ($puedeGestionarInventario): ?>
-                                    <button type="button" class="btn btn-sm btn-warning edit-btn" 
-                                            data-bs-toggle="modal" data-bs-target="#productoModal"
-                                            data-id="<?php echo $producto['id_producto']; ?>"
-                                            data-imagen="<?php echo $foto; ?>"
-                                            data-codigo="<?php echo htmlspecialchars($producto['codigo_barra'] ?? ''); ?>"
-                                            data-nombre="<?php echo htmlspecialchars($producto['nombre']); ?>"
-                                            data-descripcion="<?php echo htmlspecialchars($producto['descripcion']); ?>"
-                                            data-categoria="<?php echo $producto['id_categoria']; ?>"
-                                            data-precioventa="<?php echo $producto['precio_venta']; ?>"
-                                            data-preciocompra="<?php echo $producto['precio_compra']; ?>"
-                                            data-stock="<?php echo $producto['stock']; ?>"
-                                            data-stockminimo="<?php echo $producto['stock_minimo']; ?>"
-                                            data-presentaciones='<?php echo htmlspecialchars(json_encode($presentaciones_por_producto[(int)$producto['id_producto']] ?? [], JSON_HEX_APOS | JSON_HEX_QUOT), ENT_QUOTES, 'UTF-8'); ?>'>
-                                        <i class="fas fa-edit"></i>
-                                    </button>
-
-
-
-                                <?php endif; ?>
-                                <?php if ($puedeGestionarInventario): ?>
-                                    <?php if ($producto['activo']): ?>
-                                        <a href="cambiar_estado.php?id=<?php echo $producto['id_producto']; ?>&estado=0" class="btn btn-sm btn-danger" title="Desactivar"><i class="fas fa-ban"></i></a>
-                                    <?php else: ?>
-                                        <a href="cambiar_estado.php?id=<?php echo $producto['id_producto']; ?>&estado=1" class="btn btn-sm btn-success" title="Activar"><i class="fas fa-check"></i></a>
-                                    <?php endif; ?>
-                                <?php endif; ?>
-
                                 <?php 
                                 // Determinamos el color del botón: success (verde) si está vacío, dark (negro) si tiene código
                                 $btnColor = (empty($producto['codigo_barra'])) ? 'btn-success' : 'btn-dark';
@@ -204,11 +182,39 @@ $categorias_resultado = $conexion->query($categorias_sql);
                                 </button>
 
                             </td>
+                            <?php if ($puedeGestionarInventario): ?>
+                                <td>
+                                    <?php if ($puedeEditar): ?>
+                                        <button type="button" class="btn btn-sm btn-warning edit-btn" 
+                                                data-bs-toggle="modal" data-bs-target="#productoModal"
+                                                data-id="<?php echo $producto['id_producto']; ?>"
+                                                data-imagen="<?php echo $foto; ?>"
+                                                data-codigo="<?php echo htmlspecialchars($producto['codigo_barra'] ?? ''); ?>"
+                                                data-nombre="<?php echo htmlspecialchars($producto['nombre']); ?>"
+                                                data-descripcion="<?php echo htmlspecialchars($producto['descripcion']); ?>"
+                                                data-categoria="<?php echo $producto['id_categoria']; ?>"
+                                                data-precioventa="<?php echo $producto['precio_venta']; ?>"
+                                                data-preciocompra="<?php echo $producto['precio_compra']; ?>"
+                                                data-stock="<?php echo $producto['stock']; ?>"
+                                                data-stockminimo="<?php echo $producto['stock_minimo']; ?>"
+                                                data-presentaciones='<?php echo htmlspecialchars(json_encode($presentaciones_por_producto[(int)$producto['id_producto']] ?? [], JSON_HEX_APOS | JSON_HEX_QUOT), ENT_QUOTES, 'UTF-8'); ?>'>
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                    <?php endif; ?>
+                                    <?php if ($puedeCambiarEstado): ?>
+                                        <?php if ($producto['activo']): ?>
+                                            <a href="cambiar_estado.php?id=<?php echo $producto['id_producto']; ?>&estado=0" class="btn btn-sm btn-danger" title="Desactivar"><i class="fas fa-ban"></i></a>
+                                        <?php else: ?>
+                                            <a href="cambiar_estado.php?id=<?php echo $producto['id_producto']; ?>&estado=1" class="btn btn-sm btn-success" title="Activar"><i class="fas fa-check"></i></a>
+                                        <?php endif; ?>
+                                    <?php endif; ?>
+                                </td>
+                            <?php endif; ?>
                         </tr>
                         <?php endforeach; ?>
                     <?php else: ?>
                         <tr>
-                            <td colspan="6" class="text-center">No hay productos <?php echo $ver_inactivos ? 'inactivos' : 'activos'; ?>.</td>
+                            <td colspan="<?php echo $puedeGestionarInventario ? 8 : 7; ?>" class="text-center">No hay productos <?php echo $ver_inactivos ? 'inactivos' : 'activos'; ?>.</td>
                         </tr>
                     <?php endif; ?>
                 </tbody>

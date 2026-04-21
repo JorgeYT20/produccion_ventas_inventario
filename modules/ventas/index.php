@@ -43,7 +43,8 @@ $clientes_resultado = $conexion->query($clientes_sql);
         border: 1px solid #ddd;
     }
 
-    #galeria-productos {
+    #galeria-productos,
+    #galeria-combos {
         max-height: 65vh;
         overflow-y: auto;
         overflow-x: hidden;
@@ -51,11 +52,13 @@ $clientes_resultado = $conexion->query($clientes_sql);
         padding-bottom: 20px;
     }
 
-    #galeria-productos::-webkit-scrollbar {
+    #galeria-productos::-webkit-scrollbar,
+    #galeria-combos::-webkit-scrollbar {
         width: 6px;
     }
 
-    #galeria-productos::-webkit-scrollbar-thumb {
+    #galeria-productos::-webkit-scrollbar-thumb,
+    #galeria-combos::-webkit-scrollbar-thumb {
         background: #ccc;
         border-radius: 10px;
     }
@@ -80,6 +83,21 @@ $clientes_resultado = $conexion->query($clientes_sql);
     .producto-card .card:hover {
         transform: translateY(-2px);
         box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.08);
+    }
+
+    .combo-card .card {
+        border-radius: 14px;
+        background: #fffdf2;
+        transition: transform 0.15s ease, box-shadow 0.15s ease;
+    }
+
+    .combo-card .card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 0.75rem 1.25rem rgba(255, 193, 7, 0.18);
+    }
+
+    .combo-detalle {
+        min-height: 38px;
     }
 
     .presentacion-option {
@@ -134,7 +152,17 @@ $clientes_resultado = $conexion->query($clientes_sql);
                 </div>
             </div>
 
+            <ul class="nav nav-pills mt-3" id="ventas-tabs">
+                <li class="nav-item">
+                    <button type="button" class="nav-link active" data-vista="productos">Productos</button>
+                </li>
+                <li class="nav-item ms-2">
+                    <button type="button" class="nav-link" data-vista="combos">Combos</button>
+                </li>
+            </ul>
+
             <div id="galeria-productos" class="row g-3 mt-3"></div>
+            <div id="galeria-combos" class="row g-3 mt-3 d-none"></div>
         </div>
 
         <div class="col-md-5">
@@ -250,6 +278,7 @@ $clientes_resultado = $conexion->query($clientes_sql);
     let productoActualPresentaciones = null;
     let combosDisponibles = [];
     let comboDetectionEnabled = true;
+    let vistaGaleriaActual = 'productos';
     const MONEDA = '<?php echo getMoneda(); ?>';
     const DESCUENTO_DECIMALES = 2;
 
@@ -782,6 +811,105 @@ $clientes_resultado = $conexion->query($clientes_sql);
         return col;
     }
 
+    function obtenerResumenProductosCombo(combo) {
+        if (!Array.isArray(combo.productos) || combo.productos.length === 0) {
+            return 'Sin productos configurados.';
+        }
+
+        return combo.productos
+            .map(producto => `${producto.cantidad}x ${producto.nombre}`)
+            .join(', ');
+    }
+
+    function renderizarTarjetaCombo(combo) {
+        const col = document.createElement('div');
+        col.className = 'col-md-4 col-sm-6 mb-3 combo-card';
+        col.innerHTML = `
+            <div class="card h-100 border border-warning border-2 shadow-sm">
+                <div class="card-body d-flex flex-column">
+                    <div class="d-flex justify-content-between align-items-start mb-2 gap-2">
+                        <span class="badge bg-warning text-dark">COMBO</span>
+                        <span class="fw-bold text-success">${MONEDA}${parseFloat(combo.precio || 0).toFixed(2)}</span>
+                    </div>
+                    <h6 class="fw-bold mb-2">${combo.nombre}</h6>
+                    <small class="text-muted combo-detalle d-block mb-3">${obtenerResumenProductosCombo(combo)}</small>
+                    <button class="btn btn-warning text-dark btn-sm w-100 mt-auto btn-agregar-combo">
+                        <i class="fas fa-bolt"></i> Agregar Combo
+                    </button>
+                </div>
+            </div>
+        `;
+
+        col.querySelector('.btn-agregar-combo').addEventListener('click', () => {
+            agregarComboAlCarritoDirecto(combo.id_combo);
+        });
+
+        return col;
+    }
+
+    function renderizarGaleriaCombos() {
+        const galeriaCombos = document.getElementById('galeria-combos');
+        if (!galeriaCombos) {
+            return;
+        }
+
+        galeriaCombos.innerHTML = '';
+
+        if (!Array.isArray(combosDisponibles) || combosDisponibles.length === 0) {
+            galeriaCombos.innerHTML = '<div class="col-12"><div class="alert alert-warning mb-0">No hay combos disponibles en este momento.</div></div>';
+            return;
+        }
+
+        combosDisponibles.forEach(combo => {
+            galeriaCombos.appendChild(renderizarTarjetaCombo(combo));
+        });
+    }
+
+    function filtrarVista(tipo) {
+        const galeriaProductos = document.getElementById('galeria-productos');
+        const galeriaCombos = document.getElementById('galeria-combos');
+        const tabs = document.querySelectorAll('#ventas-tabs [data-vista]');
+
+        vistaGaleriaActual = tipo === 'combos' ? 'combos' : 'productos';
+
+        galeriaProductos?.classList.toggle('d-none', vistaGaleriaActual !== 'productos');
+        galeriaCombos?.classList.toggle('d-none', vistaGaleriaActual !== 'combos');
+
+        tabs.forEach(tab => {
+            tab.classList.toggle('active', tab.dataset.vista === vistaGaleriaActual);
+        });
+
+        if (vistaGaleriaActual === 'combos') {
+            renderizarGaleriaCombos();
+        }
+    }
+
+    async function agregarComboAlCarritoDirecto(idCombo) {
+        const combo = combosDisponibles.find(item => Number(item.id_combo) === Number(idCombo));
+
+        if (!combo) {
+            alert('No se encontro el combo seleccionado.');
+            return;
+        }
+
+        try {
+            for (const itemCombo of combo.productos || []) {
+                for (let i = 0; i < (parseInt(itemCombo.cantidad, 10) || 0); i++) {
+                    const data = await fetchJson(`buscar_productos.php?term=${encodeURIComponent(itemCombo.id_producto)}&exact=1`);
+
+                    if (!Array.isArray(data) || data.length === 0) {
+                        throw new Error(`No se encontro el producto ${itemCombo.nombre}.`);
+                    }
+
+                    agregarAlCarrito(data[0]);
+                }
+            }
+        } catch (error) {
+            console.error('Error agregando combo al carrito', error);
+            alert(error.message || 'No se pudo agregar el combo al carrito.');
+        }
+    }
+
     function cargarGaleria(filtro = '') {
         const galeria = document.getElementById('galeria-productos');
 
@@ -808,6 +936,7 @@ $clientes_resultado = $conexion->query($clientes_sql);
         const pagoModal = document.getElementById('pagoModal');
         const resultadosBusqueda = document.getElementById('resultados_busqueda');
         const presentacionesModalElement = document.getElementById('presentacionesModal');
+        const tabsVista = document.querySelectorAll('#ventas-tabs [data-vista]');
 
         presentacionesModalInstance = presentacionesModalElement ? new bootstrap.Modal(presentacionesModalElement) : null;
 
@@ -817,13 +946,26 @@ $clientes_resultado = $conexion->query($clientes_sql);
         fetchJson('obtener_combos.php')
             .then(data => {
                 combosDisponibles = Array.isArray(data) ? data : [];
+                if (vistaGaleriaActual === 'combos') {
+                    renderizarGaleriaCombos();
+                }
             })
             .catch(error => {
                 console.error('No se pudieron cargar los combos', error);
                 combosDisponibles = [];
+                if (vistaGaleriaActual === 'combos') {
+                    renderizarGaleriaCombos();
+                }
             });
 
         cargarGaleria();
+        filtrarVista('productos');
+
+        tabsVista.forEach(tab => {
+            tab.addEventListener('click', () => {
+                filtrarVista(tab.dataset.vista);
+            });
+        });
 
         buscarInput.addEventListener('input', e => {
             cargarGaleria(e.target.value);

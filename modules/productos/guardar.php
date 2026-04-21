@@ -11,17 +11,24 @@ if (!isset($_SESSION['id_usuario'])) {
     exit;
 }
 
-if (!usuarioTieneRol([1, 2]) && !tienePermiso('productos_crear') && !tienePermiso('productos_editar')) {
-    http_response_code(403);
-    exit('Acceso no autorizado.');
-}
-
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     header("Location: index.php");
     exit;
 }
 
 $id_producto = !empty($_POST['id_producto']) ? (int)$_POST['id_producto'] : null;
+
+if ($id_producto) {
+    $puedeGuardarProducto = usuarioTieneRol([1]) || tienePermiso('productos_editar');
+} else {
+    $puedeGuardarProducto = usuarioTieneRol([1]) || tienePermiso('productos_crear');
+}
+
+if (!$puedeGuardarProducto) {
+    http_response_code(403);
+    exit('Acceso no autorizado.');
+}
+
 $nombre = trim($_POST['nombre'] ?? '');
 $codigo_barra = trim($_POST['codigo_barra'] ?? '');
 $descripcion = trim($_POST['descripcion'] ?? '');
