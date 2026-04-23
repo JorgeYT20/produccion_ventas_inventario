@@ -186,18 +186,27 @@ $categorias_resultado = $conexion->query($categorias_sql);
                                 <td>
                                     <?php if ($puedeEditar): ?>
                                         <button type="button" class="btn btn-sm btn-warning edit-btn" 
-                                                data-bs-toggle="modal" data-bs-target="#productoModal"
-                                                data-id="<?php echo $producto['id_producto']; ?>"
-                                                data-imagen="<?php echo $foto; ?>"
-                                                data-codigo="<?php echo htmlspecialchars($producto['codigo_barra'] ?? ''); ?>"
-                                                data-nombre="<?php echo htmlspecialchars($producto['nombre']); ?>"
-                                                data-descripcion="<?php echo htmlspecialchars($producto['descripcion']); ?>"
-                                                data-categoria="<?php echo $producto['id_categoria']; ?>"
-                                                data-precioventa="<?php echo $producto['precio_venta']; ?>"
-                                                data-preciocompra="<?php echo $producto['precio_compra']; ?>"
-                                                data-stock="<?php echo $producto['stock']; ?>"
-                                                data-stockminimo="<?php echo $producto['stock_minimo']; ?>"
-                                                data-presentaciones='<?php echo htmlspecialchars(json_encode($presentaciones_por_producto[(int)$producto['id_producto']] ?? [], JSON_HEX_APOS | JSON_HEX_QUOT), ENT_QUOTES, 'UTF-8'); ?>'>
+                                            data-bs-toggle="modal" 
+                                            data-bs-target="#productoModal"
+                                            
+                                            data-id="<?= $producto['id_producto']; ?>"
+                                            data-imagen="<?= htmlspecialchars($foto ?? '', ENT_QUOTES, 'UTF-8'); ?>"
+                                            data-codigo="<?= htmlspecialchars($producto['codigo_barra'] ?? '', ENT_QUOTES, 'UTF-8'); ?>"
+                                            data-nombre="<?= htmlspecialchars($producto['nombre'] ?? '', ENT_QUOTES, 'UTF-8'); ?>"
+                                            data-descripcion="<?= htmlspecialchars($producto['descripcion'] ?? '', ENT_QUOTES, 'UTF-8'); ?>"
+                                            data-categoria="<?= $producto['id_categoria'] ?? ''; ?>"
+                                            data-precioventa="<?= $producto['precio_venta'] ?? 0; ?>"
+                                            data-precioventalocal="<?= $producto['precio_venta_local'] ?? 0; ?>"
+                                            data-preciocompra="<?= $producto['precio_compra'] ?? 0; ?>"
+                                            data-stock="<?= $producto['stock'] ?? 0; ?>"
+                                            data-stockminimo="<?= $producto['stock_minimo'] ?? 0; ?>"
+                                            
+                                            data-presentaciones="<?= htmlspecialchars(
+                                                json_encode($presentaciones_por_producto[(int)$producto['id_producto']] ?? []),
+                                                ENT_QUOTES,
+                                                'UTF-8'
+                                            ); ?>"
+                                        >
                                             <i class="fas fa-edit"></i>
                                         </button>
                                     <?php endif; ?>
@@ -279,6 +288,15 @@ $categorias_resultado = $conexion->query($categorias_sql);
                     <input type="number" step="0.01" class="form-control" name="precio_compra" id="precio_compra">
                 </div>
             </div>
+            <div class="form-check form-switch mb-3">
+                <input class="form-check-input" type="checkbox" role="switch" id="habilitar_precio_local" name="habilitar_precio_local" value="1">
+                <label class="form-check-label" for="habilitar_precio_local">Habilitar Precio Local</label>
+            </div>
+            <div class="mb-3 d-none" id="precio_venta_local_wrapper">
+                <label for="precio_venta_local" class="form-label">Precio Venta Local</label>
+                <input type="number" step="0.01" min="0" class="form-control" name="precio_venta_local" id="precio_venta_local" value="0">
+                <small class="text-muted">Se aplicar&aacute; solo a la venta por unidad.</small>
+            </div>
              <div class="row">
                 <div class="col-md-6 mb-3">
                     <label for="stock" class="form-label">Stock Actual</label>
@@ -303,7 +321,7 @@ $categorias_resultado = $conexion->query($categorias_sql);
                 <div class="d-flex justify-content-between align-items-center mb-3">
                     <div>
                         <h6 class="mb-1">Presentaciones adicionales</h6>
-                        <small class="text-muted">MantÃ©n el precio base como unidad y agrega packs o caja.</small>
+                        <small class="text-muted">Mantener el precio base como unidad y agrega packs o caja.</small>
                     </div>
                     <div class="btn-group btn-group-sm" role="group">
                         <button type="button" class="btn btn-outline-primary preset-presentacion-btn" data-tipo="x3" data-cantidad="3">+ x3</button>
@@ -313,7 +331,7 @@ $categorias_resultado = $conexion->query($categorias_sql);
                 </div>
                 <div id="presentaciones_container" class="d-grid gap-2"></div>
                 <button type="button" class="btn btn-outline-secondary btn-sm mt-3" id="btn_agregar_presentacion">
-                    <i class="fas fa-plus me-1"></i> Agregar presentaciÃ³n manual
+                    <i class="fas fa-plus me-1"></i> Agregar presentacion manual
                 </button>
             </div>
 
@@ -406,6 +424,26 @@ function limpiarPresentaciones() {
     document.getElementById('presentaciones_container').innerHTML = '';
 }
 
+function actualizarPrecioLocalUI(valor = 0) {
+    const switchPrecioLocal = document.getElementById('habilitar_precio_local');
+    const wrapperPrecioLocal = document.getElementById('precio_venta_local_wrapper');
+    const inputPrecioLocal = document.getElementById('precio_venta_local');
+
+    if (!switchPrecioLocal || !wrapperPrecioLocal || !inputPrecioLocal) {
+        return;
+    }
+
+    const precioNormalizado = Number.parseFloat(valor) || 0;
+    const habilitado = switchPrecioLocal.checked;
+    wrapperPrecioLocal.classList.toggle('d-none', !habilitado);
+
+    if (habilitado) {
+        inputPrecioLocal.value = precioNormalizado > 0 ? precioNormalizado.toFixed(2) : '';
+    } else {
+        inputPrecioLocal.value = '0';
+    }
+}
+
 // Variable global dentro del scope de carga
 let idActual = "";
 
@@ -413,6 +451,11 @@ document.addEventListener('DOMContentLoaded', function() {
     let idActual = "";
     let codigoActual = "";
     let nombreActual = "";
+    const switchPrecioLocal = document.getElementById('habilitar_precio_local');
+
+    switchPrecioLocal?.addEventListener('change', function() {
+        actualizarPrecioLocalUI(this.checked ? document.getElementById('precio_venta_local')?.value : 0);
+    });
 
     // Al abrir la modal
     document.querySelectorAll('.barcode-btn').forEach(btn => {
@@ -500,6 +543,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 document.getElementById('id_categoria').value = '';
                 document.getElementById('precio_venta').value = '';
                 document.getElementById('precio_compra').value = '';
+                document.getElementById('habilitar_precio_local').checked = false;
+                document.getElementById('precio_venta_local').value = '0';
+                actualizarPrecioLocalUI(0);
                 document.getElementById('stock').value = '';
                 document.getElementById('stock_minimo').value = '';
                 document.getElementById('codigo_barra').value = ''; // Limpiar código
@@ -520,6 +566,10 @@ document.addEventListener('DOMContentLoaded', function() {
             // Cargar Valores Numéricos
             document.getElementById('precio_venta').value = button.getAttribute('data-precioventa');
             document.getElementById('precio_compra').value = button.getAttribute('data-preciocompra');
+            const precioVentaLocal = parseFloat(button.getAttribute('data-precioventalocal') || '0') || 0;
+            document.getElementById('habilitar_precio_local').checked = precioVentaLocal > 0;
+            document.getElementById('precio_venta_local').value = precioVentaLocal > 0 ? precioVentaLocal.toFixed(2) : '0';
+            actualizarPrecioLocalUI(precioVentaLocal);
             document.getElementById('stock').value = button.getAttribute('data-stock');
             document.getElementById('stock_minimo').value = button.getAttribute('data-stockminimo');
 

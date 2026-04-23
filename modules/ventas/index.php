@@ -160,6 +160,7 @@ $clientes_resultado = $conexion->query($clientes_sql);
                     <button type="button" class="nav-link" data-vista="combos">Combos</button>
                 </li>
             </ul>
+            
 
             <div id="galeria-productos" class="row g-3 mt-3"></div>
             <div id="galeria-combos" class="row g-3 mt-3 d-none"></div>
@@ -299,6 +300,10 @@ $clientes_resultado = $conexion->query($clientes_sql);
         const total = Math.max(0, subtotal - descuentoAplicado);
 
         return { subtotal, descuento: descuentoAplicado, total };
+    }
+
+    function actualizarTotales() {
+        renderizarCarrito();
     }
 
     function actualizarModalPago() {
@@ -461,18 +466,49 @@ $clientes_resultado = $conexion->query($clientes_sql);
     function crearItemCarrito(producto, presentacion) {
         const unidadesPorPresentacion = parseInt(presentacion.cantidad, 10) || 1;
         const stockTotal = parseInt(producto.stock, 10) || 0;
+        const precioBase = parseFloat(presentacion.precio);
+        const precioLocal = unidadesPorPresentacion === 1
+            ? (parseFloat(producto.precio_venta_local) || 0)
+            : 0;
 
         return {
             id: Number(producto.id_producto),
             id_presentacion: presentacion.id_presentacion ?? null,
             nombre: producto.nombre,
-            precio: parseFloat(presentacion.precio),
+            precio: precioBase,
+            precio_base: precioBase,
+            precio_local: precioLocal,
+            usa_precio_local: false,
             cantidad: 1,
             tipo_presentacion: presentacion.tipo || 'Unidad',
             unidades_por_presentacion: unidadesPorPresentacion,
             stockTotal: stockTotal,
             stockMax: obtenerStockMaxPresentacion(stockTotal, unidadesPorPresentacion)
         };
+    }
+
+    function itemPermitePrecioLocal(item) {
+        return item.tipo_item !== 'combo'
+            && Number(item.unidades_por_presentacion) === 1
+            && Number(item.id_presentacion ?? 0) === 0
+            && (parseFloat(item.precio_local) || 0) > 0;
+    }
+
+    function alternarPrecio(idProducto, estado) {
+        const item = carrito.find(producto =>
+            producto.tipo_item !== 'combo'
+            && Number(producto.id) === Number(idProducto)
+            && Number(producto.unidades_por_presentacion) === 1
+            && Number(producto.id_presentacion ?? 0) === 0
+        );
+
+        if (!item || !itemPermitePrecioLocal(item)) {
+            return;
+        }
+
+        item.usa_precio_local = Boolean(estado);
+        item.precio = item.usa_precio_local ? item.precio_local : item.precio_base;
+        actualizarTotales();
     }
 
     function agregarItemPresentacion(producto, presentacion) {
@@ -690,6 +726,15 @@ $clientes_resultado = $conexion->query($clientes_sql);
             const nombreMostrado = item.tipo_item === 'combo'
                 ? item.nombre
                 : `${item.nombre} (${item.tipo_presentacion})`;
+            const precioLocalDisponible = itemPermitePrecioLocal(item);
+            const switchPrecioLocal = precioLocalDisponible
+                ? `
+                    <div class="form-check form-switch mt-2 mb-0">
+                        <input class="form-check-input precio-local-switch" type="checkbox" role="switch" data-id-producto="${item.id}" ${item.usa_precio_local ? 'checked' : ''}>
+                        <label class="form-check-label small text-muted">Precio local</label>
+                    </div>
+                `
+                : '';
             const badgeClase = item.tipo_item === 'combo' ? 'bg-warning text-dark' : 'badge-presentacion';
             const detalleSecundario = item.tipo_item === 'combo'
                 ? 'Combo automatico'
@@ -706,6 +751,7 @@ $clientes_resultado = $conexion->query($clientes_sql);
                 <td class="align-middle">
                     <strong>${nombreMostrado}</strong><br>
                     <span class="badge ${badgeClase}">${item.tipo_presentacion}</span>
+                    ${switchPrecioLocal}
                 </td>
                 <td class="align-middle">
                     ${MONEDA}${item.precio.toFixed(2)}<br>
@@ -741,6 +787,11 @@ $clientes_resultado = $conexion->query($clientes_sql);
     }
 
     document.addEventListener('change', function (e) {
+        if (e.target && e.target.classList.contains('precio-local-switch')) {
+            alternarPrecio(e.target.getAttribute('data-id-producto'), e.target.checked);
+            return;
+        }
+
         if (e.target && e.target.classList.contains('cantidad-input')) {
             const index = Number(e.target.getAttribute('data-index'));
             const nuevaCantidad = parseInt(e.target.value, 10);
@@ -1073,6 +1124,8 @@ $clientes_resultado = $conexion->query($clientes_sql);
                         tipo_item: 'producto',
                         tipo: 'producto',
                         tipo_presentacion: item.tipo_presentacion,
+                        usa_precio_local: item.usa_precio_local,
+                        precio_unitario: Number(item.precio),
                         cantidad_presentaciones: item.cantidad,
                         cantidad: item.cantidad,
                         cantidad_real: item.cantidad * item.unidades_por_presentacion

@@ -7,7 +7,7 @@ $exact = isset($_GET['exact']); // Nueva bandera
 
 if ($exact) {
     // BÚSQUEDA POR ESCÁNER (Coincidencia exacta)
-    $sql = "SELECT id_producto, nombre, precio_venta, stock, imagen
+    $sql = "SELECT id_producto, nombre, precio_venta, precio_venta_local, stock, imagen
             FROM productos 
             WHERE (codigo_barra = ? OR id_producto = ?) 
             AND activo = 1 LIMIT 1";
@@ -15,7 +15,7 @@ if ($exact) {
     $stmt->bind_param("ss", $term, $term);
 } else {
     // BÚSQUEDA POR NOMBRE (Sugerencias)
-    $sql = "SELECT id_producto, nombre, precio_venta, stock, imagen
+    $sql = "SELECT id_producto, nombre, precio_venta, precio_venta_local, stock, imagen
             FROM productos 
             WHERE nombre LIKE ? 
             AND activo = 1 LIMIT 10";

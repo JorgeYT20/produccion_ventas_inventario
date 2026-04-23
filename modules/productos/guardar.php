@@ -34,6 +34,8 @@ $codigo_barra = trim($_POST['codigo_barra'] ?? '');
 $descripcion = trim($_POST['descripcion'] ?? '');
 $id_categoria = !empty($_POST['id_categoria']) ? (int)$_POST['id_categoria'] : null;
 $precio_venta = (float)($_POST['precio_venta'] ?? 0);
+$precio_venta_local = isset($_POST['habilitar_precio_local']) ? (float)($_POST['precio_venta_local'] ?? 0) : 0;
+$precio_venta_local = max(0, $precio_venta_local);
 $precio_compra = (float)($_POST['precio_compra'] ?? 0);
 $stock = (int)($_POST['stock'] ?? 0);
 $stock_minimo = (int)($_POST['stock_minimo'] ?? 0);
@@ -104,16 +106,16 @@ try {
             }
 
             $sql = "UPDATE productos
-                    SET nombre=?, codigo_barra=?, descripcion=?, id_categoria=?, precio_venta=?, precio_compra=?, stock=?, stock_minimo=?, imagen=?
+                    SET nombre=?, codigo_barra=?, descripcion=?, id_categoria=?, precio_venta=?, precio_venta_local=?, precio_compra=?, stock=?, stock_minimo=?, imagen=?
                     WHERE id_producto=?";
             $stmt = $conexion->prepare($sql);
-            $stmt->bind_param("sssiddiisi", $nombre, $codigo_barra, $descripcion, $id_categoria, $precio_venta, $precio_compra, $stock, $stock_minimo, $nombre_imagen, $id_producto);
+            $stmt->bind_param("sssidddiisi", $nombre, $codigo_barra, $descripcion, $id_categoria, $precio_venta, $precio_venta_local, $precio_compra, $stock, $stock_minimo, $nombre_imagen, $id_producto);
         } else {
             $sql = "UPDATE productos
-                    SET nombre=?, codigo_barra=?, descripcion=?, id_categoria=?, precio_venta=?, precio_compra=?, stock=?, stock_minimo=?
+                    SET nombre=?, codigo_barra=?, descripcion=?, id_categoria=?, precio_venta=?, precio_venta_local=?, precio_compra=?, stock=?, stock_minimo=?
                     WHERE id_producto=?";
             $stmt = $conexion->prepare($sql);
-            $stmt->bind_param("sssiddiii", $nombre, $codigo_barra, $descripcion, $id_categoria, $precio_venta, $precio_compra, $stock, $stock_minimo, $id_producto);
+            $stmt->bind_param("sssidddiii", $nombre, $codigo_barra, $descripcion, $id_categoria, $precio_venta, $precio_venta_local, $precio_compra, $stock, $stock_minimo, $id_producto);
         }
 
         $stmt->execute();
@@ -121,10 +123,10 @@ try {
         $producto_id_guardado = $id_producto;
     } else {
         $imagen_final = $nombre_imagen ?? 'default_producto.png';
-        $sql = "INSERT INTO productos (nombre, codigo_barra, descripcion, id_categoria, precio_venta, precio_compra, stock, stock_minimo, imagen)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        $sql = "INSERT INTO productos (nombre, codigo_barra, descripcion, id_categoria, precio_venta, precio_venta_local, precio_compra, stock, stock_minimo, imagen)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
         $stmt = $conexion->prepare($sql);
-        $stmt->bind_param("sssiddiis", $nombre, $codigo_barra, $descripcion, $id_categoria, $precio_venta, $precio_compra, $stock, $stock_minimo, $imagen_final);
+        $stmt->bind_param("sssidddiis", $nombre, $codigo_barra, $descripcion, $id_categoria, $precio_venta, $precio_venta_local, $precio_compra, $stock, $stock_minimo, $imagen_final);
         $stmt->execute();
         $producto_id_guardado = (int)$conexion->insert_id;
         $stmt->close();

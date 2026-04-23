@@ -187,6 +187,7 @@ try {
 
         $id_producto = isset($item['id_producto']) ? (int)$item['id_producto'] : (isset($item['id']) ? (int)$item['id'] : 0);
         $id_presentacion = isset($item['id_presentacion']) && $item['id_presentacion'] !== '' ? (int)$item['id_presentacion'] : null;
+        $precio_unitario_enviado = isset($item['precio_unitario']) ? (float)$item['precio_unitario'] : null;
         $cantidad_presentaciones = isset($item['cantidad_presentaciones']) ? (int)$item['cantidad_presentaciones'] : (isset($item['cantidad']) ? (int)$item['cantidad'] : 0);
         $cantidad_real_enviada = isset($item['cantidad_real']) ? (int)$item['cantidad_real'] : (isset($item['cantidad']) ? (int)$item['cantidad'] : 0);
 
@@ -204,6 +205,12 @@ try {
 
         $precio_presentacion = (float)$presentacion['precio_presentacion'];
         $precio_unitario = $precio_presentacion / $cantidad_unidades;
+
+        if ($cantidad_unidades === 1 && ($id_presentacion === null || $id_presentacion <= 0) && $precio_unitario_enviado !== null && $precio_unitario_enviado > 0) {
+            $precio_unitario = $precio_unitario_enviado;
+            $precio_presentacion = $precio_unitario_enviado;
+        }
+
         $subtotal_item = $precio_presentacion * $cantidad_presentaciones;
         $subtotal_venta += $subtotal_item;
 

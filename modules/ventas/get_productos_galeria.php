@@ -5,7 +5,7 @@ header('Content-Type: application/json');
 
 $buscar = $_GET['buscar'] ?? '';
 
-$sql = "SELECT id_producto, nombre, precio_venta, imagen, stock
+$sql = "SELECT id_producto, nombre, precio_venta, precio_venta_local, imagen, stock
         FROM productos
         WHERE activo = 1";
 
