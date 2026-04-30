@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Servidor: 127.0.0.1
--- Tiempo de generación: 15-04-2026 a las 17:11:00
+-- Tiempo de generación: 30-04-2026 a las 04:52:46
 -- Versión del servidor: 10.4.32-MariaDB
 -- Versión de PHP: 8.2.12
 
@@ -84,6 +84,13 @@ CREATE TABLE `combos` (
   `fecha_actualizacion` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
+--
+-- Volcado de datos para la tabla `combos`
+--
+
+INSERT INTO `combos` (`id_combo`, `nombre`, `precio`, `activo`, `fecha_creacion`, `fecha_actualizacion`) VALUES
+(2, 'Combo Russcaya', 40.00, 1, '2026-04-21 02:42:05', '2026-04-21 02:42:05');
+
 -- --------------------------------------------------------
 
 --
@@ -96,6 +103,15 @@ CREATE TABLE `combo_detalle` (
   `id_producto` int(11) NOT NULL,
   `cantidad` int(11) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Volcado de datos para la tabla `combo_detalle`
+--
+
+INSERT INTO `combo_detalle` (`id`, `id_combo`, `id_producto`, `cantidad`) VALUES
+(4, 2, 208, 1),
+(5, 2, 203, 1),
+(6, 2, 207, 1);
 
 -- --------------------------------------------------------
 
@@ -153,7 +169,13 @@ CREATE TABLE `detalle_ventas` (
 
 INSERT INTO `detalle_ventas` (`id_detalle_venta`, `id_venta`, `id_producto`, `cantidad`, `precio_unitario`, `descuento`, `tipo_item`, `tipo_presentacion_audit`, `descripcion_item`, `referencia_combo`, `cantidad_presentaciones_audit`) VALUES
 (520, 321, 202, 10, 2.00, 0.00, 'producto', 'Unidad', 'inka cola personal (Unidad)', NULL, 10),
-(521, 322, 202, 20, 2.00, 0.00, 'producto', 'Unidad', 'inka cola personal (Unidad)', NULL, 20);
+(521, 322, 202, 20, 2.00, 0.00, 'producto', 'Unidad', 'inka cola personal (Unidad)', NULL, 20),
+(522, 323, 208, 1, 12.31, 0.00, 'combo', 'COMBO', 'Combo Russcaya ????', 2, 1),
+(523, 323, 203, 1, 4.62, 0.00, 'combo', 'COMBO', 'Combo Russcaya ????', 2, 1),
+(524, 323, 207, 1, 23.07, 0.00, 'combo', 'COMBO', 'Combo Russcaya ????', 2, 1),
+(525, 323, 202, 1, 2.00, 0.00, 'producto', 'Unidad', 'inka cola personal (Unidad)', NULL, 1),
+(526, 324, 207, 1, 17.00, 0.00, 'producto', 'Unidad', 'Russcaya 1L (Unidad)', NULL, 1),
+(527, 325, 207, 1, 17.00, 0.00, 'producto', 'Unidad', 'Russcaya 1L (Unidad)', NULL, 1);
 
 -- --------------------------------------------------------
 
@@ -195,7 +217,13 @@ CREATE TABLE `movimientos_inventario` (
 
 INSERT INTO `movimientos_inventario` (`id_movimiento`, `id_producto`, `tipo_movimiento`, `cantidad`, `stock_anterior`, `stock_nuevo`, `fecha`, `id_usuario`, `referencia_id`) VALUES
 (522, 202, 'venta', 10, 50, 40, '2026-04-15 14:49:21', 1, 321),
-(523, 202, 'venta', 20, 40, 20, '2026-04-15 14:50:36', 1, 322);
+(523, 202, 'venta', 20, 40, 20, '2026-04-15 14:50:36', 1, 322),
+(524, 208, 'venta', 1, 50, 49, '2026-04-21 03:17:26', 1, 323),
+(525, 203, 'venta', 1, 50, 49, '2026-04-21 03:17:26', 1, 323),
+(526, 207, 'venta', 1, 50, 49, '2026-04-21 03:17:26', 1, 323),
+(527, 202, 'venta', 1, 20, 19, '2026-04-21 03:17:26', 1, 323),
+(528, 207, 'venta', 1, 49, 48, '2026-04-21 20:21:08', 1, 324),
+(529, 207, 'venta', 1, 48, 47, '2026-04-21 20:23:30', 1, 325);
 
 -- --------------------------------------------------------
 
@@ -260,6 +288,7 @@ CREATE TABLE `productos` (
   `id_proveedor_preferido` int(11) DEFAULT NULL,
   `precio_compra` decimal(10,2) NOT NULL DEFAULT 0.00,
   `precio_venta` decimal(10,2) NOT NULL,
+  `precio_venta_local` decimal(10,2) DEFAULT 0.00,
   `stock` int(11) NOT NULL DEFAULT 0,
   `stock_minimo` int(11) NOT NULL DEFAULT 5,
   `activo` tinyint(1) NOT NULL DEFAULT 1 COMMENT '1 = Activo, 0 = Inactivo',
@@ -271,8 +300,13 @@ CREATE TABLE `productos` (
 -- Volcado de datos para la tabla `productos`
 --
 
-INSERT INTO `productos` (`id_producto`, `codigo_barra`, `nombre`, `descripcion`, `imagen`, `id_categoria`, `id_proveedor_preferido`, `precio_compra`, `precio_venta`, `stock`, `stock_minimo`, `activo`, `fecha_creacion`, `fecha_actualizacion`) VALUES
-(202, '99000202', 'inka cola personal', 'inka cola personal', 'default_producto.png', 3, NULL, 1.50, 2.00, 20, 5, 1, '2026-04-15 14:32:10', '2026-04-15 14:50:36');
+INSERT INTO `productos` (`id_producto`, `codigo_barra`, `nombre`, `descripcion`, `imagen`, `id_categoria`, `id_proveedor_preferido`, `precio_compra`, `precio_venta`, `precio_venta_local`, `stock`, `stock_minimo`, `activo`, `fecha_creacion`, `fecha_actualizacion`) VALUES
+(202, '99000202', 'inka cola personal', 'inka cola personal', 'default_producto.png', 3, NULL, 1.50, 2.00, 0.00, 19, 5, 1, '2026-04-15 14:32:10', '2026-04-21 03:17:26'),
+(203, '99000203', 'Hielo 1kg', 'Hielo 1kg', 'default_producto.png', 4, NULL, 2.00, 3.00, 0.00, 49, 5, 1, '2026-04-21 02:33:30', '2026-04-21 03:17:26'),
+(207, '99000207', 'Russcaya 1L', 'Russcaya 1L', 'default_producto.png', 1, NULL, 10.00, 15.00, 17.00, 47, 5, 1, '2026-04-21 02:38:01', '2026-04-21 20:39:02'),
+(208, '99000208', 'Ginger 1.5L', 'Ginger 1.5L', 'default_producto.png', 3, NULL, 5.00, 8.00, 0.00, 49, 5, 1, '2026-04-21 02:38:46', '2026-04-21 15:08:31'),
+(209, '99000209', 'chocolate', 'chocolate', 'default_producto.png', 5, NULL, 4.00, 5.00, 0.00, 20, 1, 1, '2026-04-21 02:39:13', '2026-04-30 02:37:34'),
+(210, '99000210', 'cigarro lucky', 'cigarro lucky', 'default_producto.png', 7, NULL, 1.00, 1.50, 2.00, 18, 4, 1, '2026-04-21 02:40:01', '2026-04-21 20:33:19');
 
 -- --------------------------------------------------------
 
@@ -290,6 +324,13 @@ CREATE TABLE `producto_precios` (
   `fecha_creacion` timestamp NOT NULL DEFAULT current_timestamp(),
   `fecha_actualizacion` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Volcado de datos para la tabla `producto_precios`
+--
+
+INSERT INTO `producto_precios` (`id_precio`, `id_producto`, `tipo`, `cantidad`, `precio`, `activo`, `fecha_creacion`, `fecha_actualizacion`) VALUES
+(1, 210, 'x3', 3, 4.00, 1, '2026-04-21 20:33:19', '2026-04-21 20:33:19');
 
 -- --------------------------------------------------------
 
@@ -422,7 +463,9 @@ CREATE TABLE `turnos_caja` (
 
 INSERT INTO `turnos_caja` (`id_turno`, `id_usuario`, `fecha_apertura`, `monto_inicial`, `fecha_cierre`, `monto_final_sistema`, `monto_final_real`, `diferencia`, `estado`) VALUES
 (18, 1, '2026-04-15 14:49:06', 0.00, '2026-04-15 21:49:52', 15.00, 15.00, 0.00, 'cerrado'),
-(19, 1, '2026-04-15 14:50:22', 0.00, '2026-04-15 22:07:23', 20.00, 35.00, 15.00, 'cerrado');
+(19, 1, '2026-04-15 14:50:22', 0.00, '2026-04-15 22:07:23', 20.00, 35.00, 15.00, 'cerrado'),
+(20, 1, '2026-04-21 03:17:04', 0.00, '2026-04-22 03:21:57', 37.00, 72.00, 35.00, 'cerrado'),
+(21, 1, '2026-04-21 20:22:57', 0.00, '2026-04-22 03:25:05', 17.00, 17.00, 0.00, 'cerrado');
 
 -- --------------------------------------------------------
 
@@ -473,7 +516,10 @@ CREATE TABLE `ventas` (
 
 INSERT INTO `ventas` (`id_venta`, `id_cliente`, `id_usuario`, `id_arqueo`, `fecha_venta`, `total_venta`, `metodo_pago`, `estado`) VALUES
 (321, NULL, 1, 18, '2026-04-15 14:49:21', 20.00, '', 'completada'),
-(322, NULL, 1, 19, '2026-04-15 14:50:36', 40.00, '', 'completada');
+(322, NULL, 1, 19, '2026-04-15 14:50:36', 40.00, '', 'completada'),
+(323, NULL, 1, 20, '2026-04-21 03:17:26', 42.00, '', 'completada'),
+(324, NULL, 1, 20, '2026-04-21 20:21:08', 17.00, 'efectivo', 'completada'),
+(325, NULL, 1, 21, '2026-04-21 20:23:30', 17.00, 'efectivo', 'completada');
 
 -- --------------------------------------------------------
 
@@ -496,7 +542,11 @@ INSERT INTO `venta_pagos` (`id_pago`, `id_venta`, `metodo_pago`, `monto`) VALUES
 (7, 321, 'efectivo', 15.00),
 (8, 321, 'yape_plin', 5.00),
 (9, 322, 'efectivo', 20.00),
-(10, 322, 'yape_plin', 20.00);
+(10, 322, 'yape_plin', 20.00),
+(11, 323, 'efectivo', 20.00),
+(12, 323, 'yape_plin', 22.00),
+(13, 324, 'efectivo', 17.00),
+(14, 325, 'efectivo', 17.00);
 
 --
 -- Índices para tablas volcadas
@@ -668,13 +718,13 @@ ALTER TABLE `clientes`
 -- AUTO_INCREMENT de la tabla `combos`
 --
 ALTER TABLE `combos`
-  MODIFY `id_combo` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `id_combo` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 
 --
 -- AUTO_INCREMENT de la tabla `combo_detalle`
 --
 ALTER TABLE `combo_detalle`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
 
 --
 -- AUTO_INCREMENT de la tabla `compras`
@@ -692,7 +742,7 @@ ALTER TABLE `detalle_compras`
 -- AUTO_INCREMENT de la tabla `detalle_ventas`
 --
 ALTER TABLE `detalle_ventas`
-  MODIFY `id_detalle_venta` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=522;
+  MODIFY `id_detalle_venta` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=528;
 
 --
 -- AUTO_INCREMENT de la tabla `movimientos_caja`
@@ -704,7 +754,7 @@ ALTER TABLE `movimientos_caja`
 -- AUTO_INCREMENT de la tabla `movimientos_inventario`
 --
 ALTER TABLE `movimientos_inventario`
-  MODIFY `id_movimiento` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=524;
+  MODIFY `id_movimiento` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=530;
 
 --
 -- AUTO_INCREMENT de la tabla `permisos`
@@ -716,13 +766,13 @@ ALTER TABLE `permisos`
 -- AUTO_INCREMENT de la tabla `productos`
 --
 ALTER TABLE `productos`
-  MODIFY `id_producto` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=203;
+  MODIFY `id_producto` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=212;
 
 --
 -- AUTO_INCREMENT de la tabla `producto_precios`
 --
 ALTER TABLE `producto_precios`
-  MODIFY `id_precio` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id_precio` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
 -- AUTO_INCREMENT de la tabla `proveedores`
@@ -740,7 +790,7 @@ ALTER TABLE `roles`
 -- AUTO_INCREMENT de la tabla `turnos_caja`
 --
 ALTER TABLE `turnos_caja`
-  MODIFY `id_turno` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=20;
+  MODIFY `id_turno` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=22;
 
 --
 -- AUTO_INCREMENT de la tabla `usuarios`
@@ -752,13 +802,13 @@ ALTER TABLE `usuarios`
 -- AUTO_INCREMENT de la tabla `ventas`
 --
 ALTER TABLE `ventas`
-  MODIFY `id_venta` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=323;
+  MODIFY `id_venta` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=326;
 
 --
 -- AUTO_INCREMENT de la tabla `venta_pagos`
 --
 ALTER TABLE `venta_pagos`
-  MODIFY `id_pago` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=11;
+  MODIFY `id_pago` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=15;
 
 --
 -- Restricciones para tablas volcadas
